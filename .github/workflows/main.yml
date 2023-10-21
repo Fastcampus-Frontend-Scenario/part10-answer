@@ -32,7 +32,7 @@ jobs:
                 echo "aws ecr get-login-password --region ap-northeast-2 | docker login --username AWS --password-stdin $ECR_REGISTRY" >> scripts/deploy.sh
                 echo "docker pull $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG" >> scripts/deploy.sh
                 echo "docker kill nextjs" >> scripts/deploy.sh
-                echo "docker run -p 3000:3000 --rm --it --name nextjs $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG" >> scripts/deploy.sh
+                echo "docker run -d -p 3000:3000 --rm --name nextjs $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG" >> scripts/deploy.sh
             - name: Upload to s3
               env:
                 IMAGE_TAG: ${{ github.sha }}
