@@ -37,7 +37,7 @@ jobs:
                 IMAGE_TAG: ${{ github.sha }}
               run: |
                 zip -r deploy-$IMAGE_TAG.zip ./scripts appspec.yml
-                aws s3 cp --region ap-northeast-2 private ./deployment-$IMAGE_TAG.zip s3://semo-part10-answer
+                aws s3 cp --region ap-northeast-2 s3://semo-part10-answer ./deployment-$IMAGE_TAG.zip 
             - name: Start Deployment
               env:
                 IMAGE_TAG: ${{ github.sha }}
