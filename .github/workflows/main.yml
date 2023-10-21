@@ -1,0 +1,48 @@
+name: Deploy to AWS
+
+on:
+    push:
+        branches:
+            - main
+jobs:
+    build-docker:
+        runs-on: ubuntu-latest
+        steps:
+            - name: checkout
+              uses: actions/checkout@v2
+            - name: AWS configure
+              uses: aws-actions/configure-aws-credentials@v4
+              with:
+                  aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+                  aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+                  aws-region: ap-northeast-2
+            - name: Login to ECR
+              id: login-ecr
+              uses: aws-actions/amazon-ecr-login@v2
+            - name: Docker Build & Set Deploy script
+              env:
+                ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+                ECR_REPOSITORY: ecr
+                IMAGE_TAG: ${{ github.sha }}
+              run: |
+                docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG .
+                docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
+                mkdir scripts
+                touch scripts/deploy.sh
+                echo "aws ecr get-login-password --region ap-northeast-2 | docker login --username AWS --password-stdin $ECR_REGISTRY" >> scripts/deploy.sh
+                echo "docker pull $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG" >> scripts/deploy.sh
+                echo "docker run -p 8080:8080 --rm --name csbroker-api $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG" >> scripts/deploy.sh
+            - name: Upload to s3
+              env:
+                IMAGE_TAG: ${{ github.sha }}
+              run: |
+                zip -r deploy-$IMAGE_TAG.zip ./scripts appspec.yml
+                aws s3 cp --region ap-northeast-2 private ./deployment-$IMAGE_TAG.zip s3://semo-part10-answer
+            - name: Start Deployment
+              env:
+                IMAGE_TAG: ${{ github.sha }}
+              run: |
+                aws deploy create-deployment --application-name code-deploy-part10 \
+                --deployment-config-name CodeDeployDefault.OneAtATime \
+                --deployment-group-name code-deploy-group-part10 \
+                --s3-location bucket=semo-part10-answer,bundleType=zip,key=deployment-$IMAGE_TAG.zip
