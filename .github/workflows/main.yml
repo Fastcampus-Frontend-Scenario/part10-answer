@@ -38,12 +38,12 @@ jobs:
                 IMAGE_TAG: ${{ github.sha }}
               run: |
                 zip -r deployment-$IMAGE_TAG.zip ./scripts appspec.yml
-                aws s3 cp --region ap-northeast-2 ./deployment-$IMAGE_TAG.zip s3://semo-part10-answer
+                aws s3 cp --region ap-northeast-2 ./deployment-$IMAGE_TAG.zip s3://semo-part10-answer2
             - name: Start Deployment
               env:
                 IMAGE_TAG: ${{ github.sha }}
               run: |
-                aws deploy create-deployment --application-name code-deploy-part10 \
+                aws deploy create-deployment --application-name code-deploy-part10-2 \
                 --deployment-config-name CodeDeployDefault.OneAtATime \
-                --deployment-group-name code-deploy-group-part10 \
-                --s3-location bucket=semo-part10-answer,bundleType=zip,key=deployment-$IMAGE_TAG.zip
+                --deployment-group-name code-deploy-group-part10-2 \
+                --s3-location bucket=semo-part10-answer2,bundleType=zip,key=deployment-$IMAGE_TAG.zip
